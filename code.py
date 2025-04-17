@@ -4,8 +4,51 @@ import streamlit as st
 import pandas as pd
 
 # Load Customer Dataset
-df = pd.read_csv("/content/indian_fnb_customers.csv")
 
+
+names = ['Rohan Mehta', 'Priya Sharma', 'Aarav Verma', 'Sneha Nair', 'Rahul Das', 'Ananya Iyer', 'Karan Singh', 'Isha Patel']
+states = ['Maharashtra', 'Karnataka', 'West Bengal', 'Delhi', 'Tamil Nadu', 'Gujarat']
+cities = {
+    'Maharashtra': ['Mumbai', 'Pune'],
+    'Karnataka': ['Bengaluru', 'Mysuru'],
+    'West Bengal': ['Kolkata', 'Siliguri'],
+    'Delhi': ['New Delhi', 'Dwarka'],
+    'Tamil Nadu': ['Chennai', 'Coimbatore'],
+    'Gujarat': ['Ahmedabad', 'Surat']
+}
+pincodes = {
+    'Mumbai': [400001, 400002], 'Pune': [411001, 411002],
+    'Bengaluru': [560001, 560002], 'Mysuru': [570001, 570002],
+    'Kolkata': [700001, 700002], 'Siliguri': [734001, 734002],
+    'New Delhi': [110001, 110002], 'Dwarka': [110075, 110078],
+    'Chennai': [600001, 600002], 'Coimbatore': [641001, 641002],
+    'Ahmedabad': [380001, 380002], 'Surat': [395001, 395002]
+}
+genders = ['Male', 'Female', 'Other']
+allergies = ['None', 'Peanuts', 'Gluten', 'Lactose', 'Seafood']
+food_prefs = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Jain']
+browsing_devices = ['Mobile', 'Desktop', 'Tablet']
+
+data = []
+for i in range(100):
+    name = random.choice(names)
+    age = random.randint(18, 60)
+    sex = random.choice(genders)
+    state = random.choice(states)
+    city = random.choice(cities[state])
+    pincode = random.choice(pincodes[city])
+    allergy = random.choice(allergies)
+    food_pref = random.choice(food_prefs)
+    device = random.choice(browsing_devices)
+    budget = random.choice([200, 300, 500, 1000, 1500])  # INR
+
+    data.append([name, age, sex, state, city, pincode, allergy, food_pref, device, budget])
+
+df = pd.DataFrame(data, columns=[
+    'Name', 'Age', 'Sex', 'State', 'City', 'Pincode',
+    'Allergy', 'Food Preference', 'Device', 'Budget (INR)'
+])
+df.head()
 # -------------------------
 # Agent Functions
 # -------------------------
