@@ -1,126 +1,92 @@
 import streamlit as st
-import pandas as pd
-import requests
+import json
 import os
 
+# File to store user data
+USER_DATA_FILE = "users.json"
 
-st.set_page_config(page_title="Swiggy Registration", layout="centered")
+# Load existing users
+def load_users():
+    if os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, "r") as f:
+            return json.load(f)
+    return {}
 
-# Page Title
-st.title("🍽️ Swiggy Partner Registration")
+# Save user
+def save_user(user):
+    users = load_users()
+    users[user["name"]] = user
+    with open(USER_DATA_FILE, "w") as f:
+        json.dump(users, f, indent=4)
 
-# Registration Form
-with st.form("registration_form"):
-    st.header("Register as a Delivery Partner")
-
-    full_name = st.text_input("Full Name")
-    email = st.text_input("Email")
-    phone = st.text_input("Phone Number")
-    city = st.text_input("City")
-    vehicle = st.selectbox("Vehicle Type", ["Bicycle", "Bike", "Scooter", "Car"])
-    experience = st.radio("Do you have delivery experience?", ["Yes", "No"])
-    agree = st.checkbox("I agree to the Terms and Conditions")
-
-    submit = st.form_submit_button("Register")
-
-    if submit:
-        if not agree:
-            st.error("You must agree to the Terms and Conditions to proceed.")
-        elif not full_name or not email or not phone or not city:
-            st.warning("Please fill in all required fields.")
-        else:
-            st.success(f"🎉 Thanks for registering, {full_name}!")
-            st.info("Our team will contact you soon via email or phone.")
-
-# Optional Footer
-st.markdown("---")
-st.markdown("🚀 Built with ❤️ using Streamlit")
-
-
-
-# Swiggy pseudo API integration
-def swiggy_search(query, pin_code, allergy):
-    dummy_results = [
-        {
-            'Restaurant': 'Pizza Palace',
-            'Item': 'Gluten-Free Veg Pizza',
-            'Price': '₹299',
-            'Rating': '4.5',
-            'Distance': '2.1 km',
-            'Allergy Safe': 'Yes' if allergy.lower() not in 'gluten' else 'No'
-        },
-        {
-            'Restaurant': 'Crusty Cravings',
-            'Item': 'Cheese Burst Jain Pizza',
-            'Price': '₹320',
-            'Rating': '4.2',
-            'Distance': '3.0 km',
-            'Allergy Safe': 'Yes'
-        }
-    ]
-    return [r for r in dummy_results if r['Allergy Safe'] == 'Yes']
-
-# Streamlit Interface
-st.title("🍲 Swiggy Smart Food Finder")
-menu = st.sidebar.selectbox("Choose an option", ["Register", "Search"])
-
-if menu == "Register":
-    st.subheader("User Registration")
-
+# Registration page
+def registration_page():
+    st.title("New User Registration")
     name = st.text_input("Name")
-    age = st.number_input("Age", 18, 100)
-    sex = st.selectbox("Sex", ["Male", "Female", "Other"])
+    age = st.number_input("Age", min_value=0)
+    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
     state = st.text_input("State")
     city = st.text_input("City")
     pin_code = st.text_input("Pin Code")
+    allergies = st.text_input("Allergies (comma-separated)")
 
-    allergy = st.selectbox("Allergy", ['None', 'Gluten', 'Lactose', 'Peanuts', 'Soy', 'Shellfish', 'Eggs'])
-    food_pref = st.selectbox("Food Preference", ['Veg', 'Non-Veg', 'Jain'])
-    cuisine = st.selectbox("Preferred Cuisine", ['Indian', 'Chinese', 'Italian', 'Mexican', 'Thai', 'Continental'])
-    spice = st.selectbox("Spice Tolerance", ['Low', 'Medium', 'High'])
-    delivery = st.selectbox("Delivery Preference", ['Home Delivery', 'Pickup', 'Dine-In'])
-
-    if st.button("Submit"):
+    if st.button("Register"):
         user = {
-            'Name': name,
-            'Age': age,
-            'Sex': sex,
-            'State': state,
-            'City': city,
-            'Pin Code': pin_code,
-            'Allergy': allergy,
-            'Food Preference': food_pref,
-            'Preferred Cuisine': cuisine,
-            'Spice Tolerance': spice,
-            'Delivery Preference': delivery
+            "name": name,
+            "age": age,
+            "gender": gender,
+            "state": state,
+            "city": city,
+            "pin_code": pin_code,
+            "allergies": [a.strip().lower() for a in allergies.split(",")],
         }
         save_user(user)
-        st.success("User Registered Successfully!")
+        st.session_state.user = user
+        st.success("Registered successfully!")
+        st.experimental_rerun()
 
-elif menu == "Search":
-    st.subheader("Search Restaurants or Food")
+# Search & Recommendation Page
+def recommendation_page(user):
+    st.title("Search Restaurants and Food")
+    query = st.text_input("Search for food, drinks, or brands")
 
-    name = st.text_input("Enter your registered name")
-
-    df = load_data()
-    if name and name in df['Name'].values:
-        user_data = df[df['Name'] == name].iloc[0].to_dict()
-        query = st.text_input("Search for food or restaurant")
-
-        if st.button("Search"):
-            st.info(f"Fetching results for {query} near {user_data['Pin Code']} considering allergy: {user_data['Allergy']}")
-            results = swiggy_search(query, user_data['Pin Code'], user_data['Allergy'])
-
-            for r in results:
+    if query:
+        with st.spinner("Fetching recommendations..."):
+            results = get_recommendations(query, user)
+            st.subheader(f"Results for '{query}':")
+            for item in results:
                 st.markdown(f"""
-                **🍽️ {r['Item']}**  
-                🏬 *{r['Restaurant']}*  
-                💸 Price: {r['Price']}  
-                ⭐ Rating: {r['Rating']}  
-                📍 Distance: {r['Distance']}  
-                ✅ Allergy Safe: {r['Allergy Safe']}  
+                **{item['name']}**  
+                📍 {item['location']}  
+                💰 {item['price']}  
+                ⭐ {item['rating']}  
+                🔗 [View]({item['url']})
                 ---
                 """)
+
+# Dummy Recommendation Engine (Replace with real scraping/api)
+def get_recommendations(query, user):
+    allergy_filter = user["allergies"]
+    pin = user["pin_code"]
+
+    # Placeholder response
+    mock_results = [
+        {"name": "Pizza Palace (Gluten Free)", "location": "Nearby", "price": "₹299", "rating": 4.5, "url": "#"},
+        {"name": "Healthy Slice", "location": "1.2km away", "price": "₹349", "rating": 4.2, "url": "#"},
+    ]
+
+    # Filter based on allergy (if not gluten-free, exclude)
+    filtered = [r for r in mock_results if "gluten" in " ".join(allergy_filter).lower() and "gluten free" in r["name"].lower()]
+    return filtered or mock_results
+
+# App Entry Point
+def main():
+    st.set_page_config(page_title="Smart Food Recommender", layout="wide")
+
+    if "user" not in st.session_state:
+        registration_page()
     else:
-        if name:
-            st.error("User not found. Please register first.")
+        recommendation_page(st.session_state.user)
+
+if __name__ == "__main__":
+    main()
