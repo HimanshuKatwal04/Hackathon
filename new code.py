@@ -1,5 +1,3 @@
-# Prepare the basic structure for the Streamlit app with Swiggy integration placeholder
-streamlit_app_code = '''
 import streamlit as st
 import pandas as pd
 import requests
@@ -23,10 +21,8 @@ def save_user(user_data):
     df = pd.concat([df, pd.DataFrame([user_data])], ignore_index=True)
     df.to_csv(DATA_FILE, index=False)
 
-# Swiggy pseudo API integration (replace with actual proxy if needed)
+# Swiggy pseudo API integration
 def swiggy_search(query, pin_code, allergy):
-    # Placeholder logic simulating a Swiggy API response
-    # Replace this with actual proxy API logic or scraped data endpoint
     dummy_results = [
         {
             'Restaurant': 'Pizza Palace',
@@ -45,7 +41,6 @@ def swiggy_search(query, pin_code, allergy):
             'Allergy Safe': 'Yes'
         }
     ]
-    # Filter by allergy
     return [r for r in dummy_results if r['Allergy Safe'] == 'Yes']
 
 # Streamlit Interface
@@ -112,11 +107,3 @@ elif menu == "Search":
     else:
         if name:
             st.error("User not found. Please register first.")
-'''
-
-# Save the new Streamlit app code to a file
-file_path = "/mnt/data/swiggy_streamlit_app.py"
-with open(file_path, "w") as f:
-    f.write(streamlit_app_code)
-
-file_path
