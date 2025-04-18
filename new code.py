@@ -1,5 +1,8 @@
+# Prepare the basic structure for the Streamlit app with Swiggy integration placeholder
+streamlit_app_code = '''
 import streamlit as st
 import pandas as pd
+import requests
 import os
 
 DATA_FILE = "Hackathon Dataset - Sheet1.csv"
@@ -12,7 +15,7 @@ def load_data():
         return pd.DataFrame(columns=[
             'Name', 'Age', 'Sex', 'State', 'City', 'Pin Code',
             'Allergy', 'Food Preference', 'Preferred Cuisine',
-            'Spice Tolerance', 'Delivery Preference', 'Preferred Meal Time'
+            'Spice Tolerance', 'Delivery Preference'
         ])
 
 def save_user(user_data):
@@ -20,38 +23,37 @@ def save_user(user_data):
     df = pd.concat([df, pd.DataFrame([user_data])], ignore_index=True)
     df.to_csv(DATA_FILE, index=False)
 
-# Dummy AI recommendation agent
-def recommend_food(query, user_data):
-    allergy = user_data['Allergy']
-    pin_code = user_data['Pin Code']
-    food_type = user_data['Food Preference']
-    cuisine = user_data['Preferred Cuisine']
-    
-    # This is where you can call an actual AI agent or API
-    results = [
+# Swiggy pseudo API integration (replace with actual proxy if needed)
+def swiggy_search(query, pin_code, allergy):
+    # Placeholder logic simulating a Swiggy API response
+    # Replace this with actual proxy API logic or scraped data endpoint
+    dummy_results = [
         {
-            'Restaurant': 'Healthy Bites',
-            'Item': f'Gluten-Free {query.title()}',
-            'Cuisine': cuisine,
-            'Price': '₹250',
-            'Location': f'Near {pin_code}'
+            'Restaurant': 'Pizza Palace',
+            'Item': 'Gluten-Free Veg Pizza',
+            'Price': '₹299',
+            'Rating': '4.5',
+            'Distance': '2.1 km',
+            'Allergy Safe': 'Yes' if allergy.lower() not in 'gluten' else 'No'
         },
         {
-            'Restaurant': 'Organic Eats',
-            'Item': f'{query.title()} (No {allergy})',
-            'Cuisine': cuisine,
-            'Price': '₹280',
-            'Location': f'Within 3 km of {pin_code}'
-        },
+            'Restaurant': 'Crusty Cravings',
+            'Item': 'Cheese Burst Jain Pizza',
+            'Price': '₹320',
+            'Rating': '4.2',
+            'Distance': '3.0 km',
+            'Allergy Safe': 'Yes'
+        }
     ]
-    return results
+    # Filter by allergy
+    return [r for r in dummy_results if r['Allergy Safe'] == 'Yes']
 
-# App Interface
-st.title("🍽️ Smart Food Finder")
+# Streamlit Interface
+st.title("🍲 Swiggy Smart Food Finder")
 menu = st.sidebar.selectbox("Choose an option", ["Register", "Search"])
 
 if menu == "Register":
-    st.subheader("New User Registration")
+    st.subheader("User Registration")
 
     name = st.text_input("Name")
     age = st.number_input("Age", 18, 100)
@@ -65,7 +67,6 @@ if menu == "Register":
     cuisine = st.selectbox("Preferred Cuisine", ['Indian', 'Chinese', 'Italian', 'Mexican', 'Thai', 'Continental'])
     spice = st.selectbox("Spice Tolerance", ['Low', 'Medium', 'High'])
     delivery = st.selectbox("Delivery Preference", ['Home Delivery', 'Pickup', 'Dine-In'])
-    meal_time = st.selectbox("Preferred Meal Time", ['Breakfast', 'Lunch', 'Dinner', 'Snacks'])
 
     if st.button("Submit"):
         user = {
@@ -79,35 +80,43 @@ if menu == "Register":
             'Food Preference': food_pref,
             'Preferred Cuisine': cuisine,
             'Spice Tolerance': spice,
-            'Delivery Preference': delivery,
-            'Preferred Meal Time': meal_time
+            'Delivery Preference': delivery
         }
         save_user(user)
         st.success("User Registered Successfully!")
 
 elif menu == "Search":
-    st.subheader("Search Food / Restaurants / Brands")
+    st.subheader("Search Restaurants or Food")
 
-    name = st.text_input("Enter your registered name to fetch preferences")
+    name = st.text_input("Enter your registered name")
 
     df = load_data()
     if name and name in df['Name'].values:
         user_data = df[df['Name'] == name].iloc[0].to_dict()
-        query = st.text_input("Search for a dish, drink, or restaurant")
+        query = st.text_input("Search for food or restaurant")
 
         if st.button("Search"):
-            st.info(f"Showing results near {user_data['Pin Code']} with allergy filter: {user_data['Allergy']}")
-            results = recommend_food(query, user_data)
+            st.info(f"Fetching results for {query} near {user_data['Pin Code']} considering allergy: {user_data['Allergy']}")
+            results = swiggy_search(query, user_data['Pin Code'], user_data['Allergy'])
 
             for r in results:
                 st.markdown(f"""
-                    **🍴 {r['Item']}**  
-                    🏨 *{r['Restaurant']}*  
-                    🌶️ Cuisine: {r['Cuisine']}  
-                    💸 Price: {r['Price']}  
-                    📍 Location: {r['Location']}  
-                    ---
+                **🍽️ {r['Item']}**  
+                🏬 *{r['Restaurant']}*  
+                💸 Price: {r['Price']}  
+                ⭐ Rating: {r['Rating']}  
+                📍 Distance: {r['Distance']}  
+                ✅ Allergy Safe: {r['Allergy Safe']}  
+                ---
                 """)
     else:
         if name:
             st.error("User not found. Please register first.")
+'''
+
+# Save the new Streamlit app code to a file
+file_path = "/mnt/data/swiggy_streamlit_app.py"
+with open(file_path, "w") as f:
+    f.write(streamlit_app_code)
+
+file_path
